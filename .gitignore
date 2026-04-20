@@ -1,0 +1,7 @@
+node_modules/
+dist/
+gas/build/
+gas/node_modules/
+.env
+.env.*
+!.env.example

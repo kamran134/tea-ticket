@@ -1,0 +1,13 @@
+{
+  "name": "tea-ticket-gas",
+  "private": true,
+  "scripts": {
+    "build": "npx tsc && node -e \"require('fs').copyFileSync('appsscript.json','build/appsscript.json')\"",
+    "push": "npm run build && clasp push",
+    "deploy": "npm run push && clasp deploy"
+  },
+  "devDependencies": {
+    "@types/google-apps-script": "^1.0.100",
+    "typescript": "^6.0.3"
+  }
+}

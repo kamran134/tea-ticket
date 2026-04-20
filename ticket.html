@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tea Ticket — Мой билет</title>
+  <link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+<body class="min-h-screen bg-gradient-to-br from-emerald-50 to-amber-50">
+
+  <div class="max-w-md mx-auto px-4 py-8">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <a href="/" class="text-3xl font-bold text-emerald-800 no-underline">🍵 Tea Ticket</a>
+    </div>
+
+    <div x-data="ticketView" class="bg-white rounded-2xl shadow-lg overflow-hidden">
+
+      <!-- Loading -->
+      <template x-if="loading">
+        <div class="flex flex-col items-center justify-center py-16">
+          <svg class="animate-spin h-8 w-8 text-emerald-600" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span class="text-gray-500 mt-3">Загрузка билета…</span>
+        </div>
+      </template>
+
+      <!-- Error -->
+      <template x-if="!loading && error">
+        <div class="text-center py-16 px-6">
+          <div class="text-5xl mb-4">😕</div>
+          <h2 class="text-lg font-semibold text-gray-800 mb-2">Билет не найден</h2>
+          <p class="text-gray-500 text-sm" x-text="error"></p>
+          <a href="/" class="inline-block mt-6 text-emerald-600 hover:text-emerald-700 font-medium">
+            ← На главную
+          </a>
+        </div>
+      </template>
+
+      <!-- Ticket card -->
+      <template x-if="!loading && !error && ticket">
+        <div>
+          <!-- Status banner -->
+          <div :class="statusColor" class="px-6 py-3 text-center font-medium text-sm">
+            <span x-text="statusLabel"></span>
+            <template x-if="ticket.checkedIn">
+              <span class="ml-2">· Вход выполнен ✓</span>
+            </template>
+          </div>
+
+          <div class="p-6">
+
+            <!-- QR code (only for Confirmed) -->
+            <template x-if="ticket.status === 'Confirmed' && qrDataUrl">
+              <div class="text-center mb-6">
+                <img
+                  :src="qrDataUrl"
+                  alt="QR-код билета"
+                  class="mx-auto w-56 h-56 rounded-xl border border-gray-100"
+                />
+                <p class="text-xs text-gray-400 mt-2">Покажите QR-код на входе</p>
+              </div>
+            </template>
+
+            <!-- Pending message -->
+            <template x-if="ticket.status === 'Pending'">
+              <div class="text-center mb-6 py-4">
+                <div class="text-4xl mb-3">⏳</div>
+                <p class="text-gray-600 text-sm">
+                  Ваш чек на проверке. QR-код появится после подтверждения оплаты.
+                </p>
+              </div>
+            </template>
+
+            <!-- Rejected message -->
+            <template x-if="ticket.status === 'Rejected'">
+              <div class="text-center mb-6 py-4">
+                <div class="text-4xl mb-3">❌</div>
+                <p class="text-gray-600 text-sm">
+                  К сожалению, оплата не подтверждена. Свяжитесь с организаторами.
+                </p>
+              </div>
+            </template>
+
+            <!-- Ticket info -->
+            <div class="space-y-3 border-t border-gray-100 pt-4">
+              <div class="flex justify-between">
+                <span class="text-gray-500 text-sm">Номер</span>
+                <span class="font-mono text-sm font-medium text-gray-800" x-text="ticket.id"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 text-sm">Имя</span>
+                <span class="text-sm text-gray-800" x-text="ticket.name"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 text-sm">Телефон</span>
+                <span class="text-sm text-gray-800" x-text="ticket.phone"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 text-sm">Зона</span>
+                <span class="text-sm text-gray-800" x-text="ticket.zone"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 text-sm">Стоимость</span>
+                <span class="text-sm text-gray-800"><span x-text="ticket.price"></span> ₸</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+    </div>
+
+    <p class="text-center text-xs text-gray-400 mt-6">
+      Tea Ticket &copy; 2026
+    </p>
+  </div>
+
+  <script type="module" src="/src/ticket.ts"></script>
+</body>
+</html>
