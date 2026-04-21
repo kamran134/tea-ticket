@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tea Ticket â€” Ð‘Ñ€Ð¾Ð½Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ðµ</title>
+  <title>Tea Ticket — Бронирование</title>
   <link rel="stylesheet" href="/src/styles/main.css" />
 </head>
 <body class="min-h-screen bg-gradient-to-br from-emerald-50 to-amber-50">
@@ -12,8 +12,8 @@
 
     <!-- Header -->
     <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-emerald-800">ðŸµ Tea Ticket</h1>
-      <p class="text-gray-600 mt-2">Ð—Ð°Ð±Ñ€Ð¾Ð½Ð¸Ñ€ÑƒÐ¹Ñ‚Ðµ Ð¼ÐµÑÑ‚Ð¾ Ð½Ð° Ð¼ÐµÑ€Ð¾Ð¿Ñ€Ð¸ÑÑ‚Ð¸Ðµ</p>
+      <h1 class="text-3xl font-bold text-emerald-800">🍵 Tea Ticket</h1>
+      <p class="text-gray-600 mt-2">Забронируйте место на мероприятие</p>
     </div>
 
     <!-- Form card -->
@@ -22,8 +22,8 @@
       <!-- Invalid link -->
       <template x-if="!venueId && !zonesLoading">
         <div class="text-center py-8">
-          <div class="text-5xl mb-4">ðŸ”—</div>
-          <p class="text-gray-600">Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ ÑÑÑ‹Ð»ÐºÑƒ, ÐºÐ¾Ñ‚Ð¾Ñ€ÑƒÑŽ Ð²Ð°Ð¼ Ð¿Ñ€Ð¸ÑÐ»Ð°Ð»Ð¸ Ð¾Ñ€Ð³Ð°Ð½Ð¸Ð·Ð°Ñ‚Ð¾Ñ€Ñ‹.</p>
+          <div class="text-5xl mb-4">🔗</div>
+          <p class="text-gray-600">Используйте ссылку, которую вам прислали организаторы.</p>
         </div>
       </template>
 
@@ -34,7 +34,7 @@
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
           </svg>
-          <p class="text-gray-500 text-sm">Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð¼ÐµÑ€Ð¾Ð¿Ñ€Ð¸ÑÑ‚Ð¸Ñâ€¦</p>
+          <p class="text-gray-500 text-sm">Загрузка мероприятия…</p>
         </div>
       </template>
 
@@ -50,13 +50,13 @@
           <!-- Name -->
           <div>
             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-              Ð˜Ð¼Ñ Ð¸ Ñ„Ð°Ð¼Ð¸Ð»Ð¸Ñ
+              Имя и фамилия
             </label>
             <input
               id="name"
               type="text"
               x-model="name"
-              placeholder="Ð˜Ð²Ð°Ð½ Ð˜Ð²Ð°Ð½Ð¾Ð²"
+              placeholder="Иван Иванов"
               autocomplete="name"
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
             />
@@ -65,7 +65,7 @@
           <!-- Phone -->
           <div>
             <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
-              Ð¢ÐµÐ»ÐµÑ„Ð¾Ð½
+              Телефон
             </label>
             <input
               id="phone"
@@ -80,7 +80,7 @@
           <!-- Zone selector -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
-              Ð—Ð¾Ð½Ð°
+              Зона
             </label>
             <div class="space-y-2">
               <template x-for="zone in zones" :key="zone.id">
@@ -103,11 +103,11 @@
                     <div>
                       <p class="font-medium text-gray-800" x-text="zone.name"></p>
                       <p class="text-xs text-gray-500">
-                        ÐžÑÑ‚Ð°Ð»Ð¾ÑÑŒ Ð¼ÐµÑÑ‚: <span x-text="zone.available"></span>
+                        Свободно мест: <span x-text="zone.available"></span>
                       </p>
                     </div>
                   </div>
-                  <span class="font-semibold text-emerald-700 whitespace-nowrap" x-text="zone.price + ' â‚¼'"></span>
+                  <span class="font-semibold text-emerald-700 whitespace-nowrap" x-text="zone.price + ' ₼'"></span>
                 </label>
               </template>
             </div>
@@ -116,8 +116,164 @@
           <!-- Selected zone summary -->
           <template x-if="selectedZone()">
             <div class="bg-emerald-50 rounded-xl px-4 py-3 flex items-center justify-between">
-              <span class="text-sm text-gray-600">Ðš Ð¾Ð¿Ð»Ð°Ñ‚Ðµ:</span>
-              <span class="text-lg font-bold text-emerald-700" x-text="selectedZone().price + ' â‚¼'"></span>
+              <span class="text-sm text-gray-600">К оплате:</span>
+              <span class="text-lg font-bold text-emerald-700" x-text="selectedZone().price + ' ₼'"></span>
+            </div>
+          </template>
+
+          <!-- Error -->
+          <template x-if="error">
+            <div class="bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3" x-text="error"></div>
+          </template>
+
+          <!-- Submit -->
+          <button
+            type="submit"
+            :disabled="loading || !name || !phone || !selectedZoneId"
+            class="w-full py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+          >
+            <template x-if="loading">
+              <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+            </template>
+            <span x-text="loading ? 'Бронирование…' : 'Забронировать место'"></span>
+          </button>
+
+        </form>
+      </template>
+
+    </div>
+
+    <p class="text-center text-xs text-gray-400 mt-6">
+      Tea Ticket &copy; 2026
+    </p>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tea Ticket �?" �'�?они�?ование</title>
+  <link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+<body class="min-h-screen bg-gradient-to-br from-emerald-50 to-amber-50">
+
+  <div class="max-w-md mx-auto px-4 py-8">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-emerald-800">�Y�� Tea Ticket</h1>
+      <p class="text-gray-600 mt-2">�-аб�?они�?�fй�,е мес�,о на ме�?оп�?ия�,ие</p>
+    </div>
+
+    <!-- Form card -->
+    <div x-data="registerForm" x-init="init()" class="bg-white rounded-2xl shadow-lg p-6">
+
+      <!-- Invalid link -->
+      <template x-if="!venueId && !zonesLoading">
+        <div class="text-center py-8">
+          <div class="text-5xl mb-4">�Y"-</div>
+          <p class="text-gray-600">�~спол�Oз�fй�,е сс�<лк�f, ко�,о�?�f�Z вам п�?ислали о�?ганиза�,о�?�<.</p>
+        </div>
+      </template>
+
+      <!-- Zones loading -->
+      <template x-if="venueId && zonesLoading">
+        <div class="flex flex-col items-center justify-center py-12 gap-3">
+          <svg class="animate-spin h-8 w-8 text-emerald-500" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <p class="text-gray-500 text-sm">�-аг�?�fзка ме�?оп�?ия�,ия�?�</p>
+        </div>
+      </template>
+
+      <!-- Zones error -->
+      <template x-if="zonesError && !zonesLoading">
+        <div class="bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3" x-text="zonesError"></div>
+      </template>
+
+      <!-- Form -->
+      <template x-if="venueId && !zonesLoading && !zonesError">
+        <form @submit.prevent="submit()" class="space-y-5">
+
+          <!-- Name -->
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+              �~мя и �"амилия
+            </label>
+            <input
+              id="name"
+              type="text"
+              x-model="name"
+              placeholder="�~ван �~ванов"
+              autocomplete="name"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
+            />
+          </div>
+
+          <!-- Phone -->
+          <div>
+            <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
+              Теле�"он
+            </label>
+            <input
+              id="phone"
+              type="tel"
+              x-model="phone"
+              placeholder="+7 (777) 123-45-67"
+              autocomplete="tel"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
+            />
+          </div>
+
+          <!-- Zone selector -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              �-она
+            </label>
+            <div class="space-y-2">
+              <template x-for="zone in zones" :key="zone.id">
+                <label
+                  class="flex items-center justify-between p-3 rounded-xl border-2 cursor-pointer transition"
+                  :class="selectedZoneId === zone.id
+                    ? 'border-emerald-500 bg-emerald-50'
+                    : zone.available > 0
+                      ? 'border-gray-200 hover:border-emerald-300'
+                      : 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'"
+                >
+                  <div class="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      :value="zone.id"
+                      x-model="selectedZoneId"
+                      :disabled="zone.available <= 0"
+                      class="accent-emerald-600"
+                    />
+                    <div>
+                      <p class="font-medium text-gray-800" x-text="zone.name"></p>
+                      <p class="text-xs text-gray-500">
+                        �zс�,алос�O мес�,: <span x-text="zone.available"></span>
+                      </p>
+                    </div>
+                  </div>
+                  <span class="font-semibold text-emerald-700 whitespace-nowrap" x-text="zone.price + ' �,�'"></span>
+                </label>
+              </template>
+            </div>
+          </div>
+
+          <!-- Selected zone summary -->
+          <template x-if="selectedZone()">
+            <div class="bg-emerald-50 rounded-xl px-4 py-3 flex items-center justify-between">
+              <span class="text-sm text-gray-600">�s опла�,е:</span>
+              <span class="text-lg font-bold text-emerald-700" x-text="selectedZone().price + ' �,�'"></span>
             </div>
           </template>
 
@@ -138,7 +294,7 @@
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
               </svg>
             </template>
-            <span x-text="loading ? 'Ð‘Ñ€Ð¾Ð½Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ðµâ€¦' : 'Ð—Ð°Ð±Ñ€Ð¾Ð½Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ð¼ÐµÑÑ‚Ð¾'"></span>
+            <span x-text="loading ? '�'�?они�?ование�?�' : '�-аб�?они�?ова�,�O мес�,о'"></span>
           </button>
 
         </form>

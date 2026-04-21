@@ -254,8 +254,9 @@ export function managePanel(): ManagePanelData {
     },
 
     copyLink(venueId: string) {
-      const base = window.location.origin + window.location.pathname.replace('manage.html', '');
-      const link = `${base}?venue=${venueId}`;
+      const origin = window.location.origin;
+      const base = import.meta.env.BASE_URL ?? '/';
+      const link = `${origin}${base}?venue=${venueId}`;
       navigator.clipboard.writeText(link);
       this.showFeedback('Ссылка скопирована');
     },
