@@ -1,4 +1,4 @@
-import type { ApiResponse, RegisterResult, Ticket } from '@/types';
+import type { ApiResponse, RegisterResult, Ticket, Venue, Zone } from '@/types';
 
 const GAS_URL = import.meta.env.VITE_GAS_URL;
 
@@ -43,18 +43,55 @@ export const api = {
     return get<Ticket>('getTicket', { id });
   },
 
-  register(payload: {
-    name: string;
-    phone: string;
-    zone: string;
-    price: number;
-    receiptBase64?: string;
-    receiptFilename?: string;
-  }) {
+  getVenues() {
+    return get<Venue[]>('getVenues');
+  },
+
+  getZones(venueId: string) {
+    return get<Zone[]>('getZones', { venueId });
+  },
+
+  register(payload: { name: string; phone: string; venueId: string; zoneId: string }) {
     return post<RegisterResult>({ action: 'register', ...payload });
+  },
+
+  uploadReceipt(payload: { id: string; receiptBase64: string; receiptFilename?: string }) {
+    return post<Ticket>({ action: 'uploadReceipt', ...payload });
   },
 
   checkin(id: string) {
     return post<Ticket>({ action: 'checkin', id });
+  },
+
+  // Admin: venues
+  createVenue(payload: { name: string; date: string }) {
+    return post<Venue>({ action: 'createVenue', ...payload });
+  },
+
+  // Admin: zones
+  createZone(payload: {
+    venueId: string;
+    name: string;
+    price: number;
+    cardNumber: string;
+    capacity: number;
+    sortOrder?: number;
+  }) {
+    return post<Zone>({ action: 'createZone', ...payload });
+  },
+
+  updateZone(payload: {
+    id: string;
+    name?: string;
+    price?: number;
+    cardNumber?: string;
+    capacity?: number;
+    sortOrder?: number;
+  }) {
+    return post<Zone>({ action: 'updateZone', ...payload });
+  },
+
+  deleteZone(id: string) {
+    return post<{ deleted: boolean }>({ action: 'deleteZone', id });
   },
 };

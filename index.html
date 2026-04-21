@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tea Ticket — Регистрация</title>
+  <title>Tea Ticket â€” Ð‘Ñ€Ð¾Ð½Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ðµ</title>
   <link rel="stylesheet" href="/src/styles/main.css" />
 </head>
 <body class="min-h-screen bg-gradient-to-br from-emerald-50 to-amber-50">
@@ -12,47 +12,52 @@
 
     <!-- Header -->
     <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-emerald-800">🍵 Tea Ticket</h1>
-      <p class="text-gray-600 mt-2">Регистрация на чайное мероприятие</p>
+      <h1 class="text-3xl font-bold text-emerald-800">ðŸµ Tea Ticket</h1>
+      <p class="text-gray-600 mt-2">Ð—Ð°Ð±Ñ€Ð¾Ð½Ð¸Ñ€ÑƒÐ¹Ñ‚Ðµ Ð¼ÐµÑÑ‚Ð¾ Ð½Ð° Ð¼ÐµÑ€Ð¾Ð¿Ñ€Ð¸ÑÑ‚Ð¸Ðµ</p>
     </div>
 
-    <!-- Registration Form -->
-    <div x-data="registerForm" class="bg-white rounded-2xl shadow-lg p-6">
+    <!-- Form card -->
+    <div x-data="registerForm" x-init="init()" class="bg-white rounded-2xl shadow-lg p-6">
 
-      <!-- Success state -->
-      <template x-if="result">
+      <!-- Invalid link -->
+      <template x-if="!venueId && !zonesLoading">
         <div class="text-center py-8">
-          <div class="text-5xl mb-4">✅</div>
-          <h2 class="text-xl font-semibold text-gray-800 mb-2">Заявка отправлена!</h2>
-          <p class="text-gray-600 mb-4">
-            Ваш номер билета:
-          </p>
-          <div class="bg-emerald-50 rounded-xl p-4 mb-4">
-            <span x-text="result.id" class="text-lg font-mono font-bold text-emerald-700"></span>
-          </div>
-          <p class="text-sm text-gray-500 mb-6">
-            Статус: <span class="font-medium text-amber-600">Ожидает подтверждения</span>
-          </p>
-          <p class="text-sm text-gray-500">
-            Сохраните номер билета. После подтверждения оплаты вы получите QR-код для входа.
-          </p>
+          <div class="text-5xl mb-4">ðŸ”—</div>
+          <p class="text-gray-600">Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ ÑÑÑ‹Ð»ÐºÑƒ, ÐºÐ¾Ñ‚Ð¾Ñ€ÑƒÑŽ Ð²Ð°Ð¼ Ð¿Ñ€Ð¸ÑÐ»Ð°Ð»Ð¸ Ð¾Ñ€Ð³Ð°Ð½Ð¸Ð·Ð°Ñ‚Ð¾Ñ€Ñ‹.</p>
         </div>
       </template>
 
+      <!-- Zones loading -->
+      <template x-if="venueId && zonesLoading">
+        <div class="flex flex-col items-center justify-center py-12 gap-3">
+          <svg class="animate-spin h-8 w-8 text-emerald-500" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <p class="text-gray-500 text-sm">Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð¼ÐµÑ€Ð¾Ð¿Ñ€Ð¸ÑÑ‚Ð¸Ñâ€¦</p>
+        </div>
+      </template>
+
+      <!-- Zones error -->
+      <template x-if="zonesError && !zonesLoading">
+        <div class="bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3" x-text="zonesError"></div>
+      </template>
+
       <!-- Form -->
-      <template x-if="!result">
-        <form @submit.prevent="submit" class="space-y-5">
+      <template x-if="venueId && !zonesLoading && !zonesError">
+        <form @submit.prevent="submit()" class="space-y-5">
 
           <!-- Name -->
           <div>
             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-              Имя и фамилия
+              Ð˜Ð¼Ñ Ð¸ Ñ„Ð°Ð¼Ð¸Ð»Ð¸Ñ
             </label>
             <input
               id="name"
               type="text"
               x-model="name"
-              placeholder="Иван Иванов"
+              placeholder="Ð˜Ð²Ð°Ð½ Ð˜Ð²Ð°Ð½Ð¾Ð²"
+              autocomplete="name"
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
             />
           </div>
@@ -60,112 +65,72 @@
           <!-- Phone -->
           <div>
             <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
-              Телефон
+              Ð¢ÐµÐ»ÐµÑ„Ð¾Ð½
             </label>
             <input
               id="phone"
               type="tel"
               x-model="phone"
               placeholder="+7 (777) 123-45-67"
+              autocomplete="tel"
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
             />
           </div>
 
-          <!-- Zone -->
+          <!-- Zone selector -->
           <div>
-            <label for="zone" class="block text-sm font-medium text-gray-700 mb-1">
-              Зона
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Ð—Ð¾Ð½Ð°
             </label>
-            <input
-              id="zone"
-              type="text"
-              x-model="zone"
-              placeholder="VIP / Standard / Fan-zone"
-              class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
-            />
-          </div>
-
-          <!-- Price -->
-          <div>
-            <label for="price" class="block text-sm font-medium text-gray-700 mb-1">
-              Сумма оплаты (₼)
-            </label>
-            <input
-              id="price"
-              type="number"
-              x-model.number="price"
-              min="1"
-              placeholder="5000"
-              class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
-            />
-          </div>
-
-          <!-- Receipt upload -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Чек об оплате
-            </label>
-
-            <!-- Drop zone / preview -->
-            <template x-if="!receiptFile">
-              <label
-                for="receipt"
-                class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition"
-              >
-                <span class="text-2xl text-gray-400">📎</span>
-                <span class="text-sm text-gray-500 mt-1">Нажмите для загрузки</span>
-                <span class="text-xs text-gray-400 mt-0.5">JPEG, PNG, WebP, PDF — до 5 МБ</span>
-                <input
-                  id="receipt"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,application/pdf"
-                  @change="handleFileSelect($event)"
-                  class="hidden"
-                />
-              </label>
-            </template>
-
-            <template x-if="receiptFile">
-              <div class="relative border border-gray-200 rounded-xl p-3">
-                <!-- Image preview -->
-                <template x-if="receiptPreview">
-                  <img
-                    :src="receiptPreview"
-                    alt="Preview"
-                    class="w-full h-40 object-contain rounded-lg bg-gray-50"
-                  />
-                </template>
-                <!-- PDF indicator -->
-                <template x-if="!receiptPreview">
-                  <div class="flex items-center gap-2 py-2">
-                    <span class="text-2xl">📄</span>
-                    <span x-text="receiptFile.name" class="text-sm text-gray-600 truncate"></span>
-                  </div>
-                </template>
-                <!-- Remove button -->
-                <button
-                  type="button"
-                  @click="removeFile()"
-                  class="absolute top-2 right-2 w-7 h-7 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-200 transition"
+            <div class="space-y-2">
+              <template x-for="zone in zones" :key="zone.id">
+                <label
+                  class="flex items-center justify-between p-3 rounded-xl border-2 cursor-pointer transition"
+                  :class="selectedZoneId === zone.id
+                    ? 'border-emerald-500 bg-emerald-50'
+                    : zone.available > 0
+                      ? 'border-gray-200 hover:border-emerald-300'
+                      : 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'"
                 >
-                  ✕
-                </button>
-              </div>
-            </template>
+                  <div class="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      :value="zone.id"
+                      x-model="selectedZoneId"
+                      :disabled="zone.available <= 0"
+                      class="accent-emerald-600"
+                    />
+                    <div>
+                      <p class="font-medium text-gray-800" x-text="zone.name"></p>
+                      <p class="text-xs text-gray-500">
+                        ÐžÑÑ‚Ð°Ð»Ð¾ÑÑŒ Ð¼ÐµÑÑ‚: <span x-text="zone.available"></span>
+                      </p>
+                    </div>
+                  </div>
+                  <span class="font-semibold text-emerald-700 whitespace-nowrap" x-text="zone.price + ' â‚¼'"></span>
+                </label>
+              </template>
+            </div>
           </div>
 
-          <!-- Error message -->
-          <template x-if="error">
-            <div class="bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3">
-              <span x-text="error"></span>
+          <!-- Selected zone summary -->
+          <template x-if="selectedZone()">
+            <div class="bg-emerald-50 rounded-xl px-4 py-3 flex items-center justify-between">
+              <span class="text-sm text-gray-600">Ðš Ð¾Ð¿Ð»Ð°Ñ‚Ðµ:</span>
+              <span class="text-lg font-bold text-emerald-700" x-text="selectedZone().price + ' â‚¼'"></span>
             </div>
+          </template>
+
+          <!-- Error -->
+          <template x-if="error">
+            <div class="bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3" x-text="error"></div>
           </template>
 
           <!-- Submit -->
           <button
             type="submit"
             :disabled="loading"
-            class="w-full py-3 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+            class="w-full py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
           >
             <template x-if="loading">
               <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -173,7 +138,7 @@
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
               </svg>
             </template>
-            <span x-text="loading ? 'Отправка...' : 'Отправить заявку'"></span>
+            <span x-text="loading ? 'Ð‘Ñ€Ð¾Ð½Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ðµâ€¦' : 'Ð—Ð°Ð±Ñ€Ð¾Ð½Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ð¼ÐµÑÑ‚Ð¾'"></span>
           </button>
 
         </form>

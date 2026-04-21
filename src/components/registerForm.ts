@@ -1,87 +1,76 @@
 import { api } from '@/services/api';
-import type { RegisterResult } from '@/types';
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+import type { RegisterResult, Zone } from '@/types';
 
 interface RegisterFormData {
+  // URL param
+  venueId: string;
+
+  // Fields
   name: string;
   phone: string;
-  zone: string;
-  price: number | null;
-  receiptFile: File | null;
-  receiptPreview: string | null;
+  selectedZoneId: string;
 
+  // State
+  zones: Zone[];
+  zonesLoading: boolean;
+  zonesError: string | null;
   loading: boolean;
   error: string | null;
   result: RegisterResult | null;
 
-  init(): void;
-  handleFileSelect(event: Event): void;
-  removeFile(): void;
+  init(): Promise<void>;
+  selectedZone(): Zone | null;
   validate(): string | null;
   submit(): Promise<void>;
 }
 
 export function registerForm(): RegisterFormData {
   return {
+    venueId: '',
+
     name: '',
     phone: '',
-    zone: '',
-    price: null,
-    receiptFile: null,
-    receiptPreview: null,
+    selectedZoneId: '',
 
+    zones: [],
+    zonesLoading: false,
+    zonesError: null,
     loading: false,
     error: null,
     result: null,
 
-    init() {
-      // Alpine lifecycle hook
-    },
+    async init() {
+      const params = new URLSearchParams(window.location.search);
+      this.venueId = params.get('venue') ?? '';
 
-    handleFileSelect(event: Event) {
-      const input = event.target as HTMLInputElement;
-      const file = input.files?.[0];
-      if (!file) return;
-
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        this.error = 'Допустимые форматы: JPEG, PNG, WebP, PDF';
-        input.value = '';
+      if (!this.venueId) {
+        this.zonesError = 'Ссылка недействительна: не указано мероприятие.';
         return;
       }
 
-      if (file.size > MAX_FILE_SIZE) {
-        this.error = 'Максимальный размер файла — 5 МБ';
-        input.value = '';
-        return;
-      }
-
-      this.error = null;
-      this.receiptFile = file;
-
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.receiptPreview = e.target?.result as string;
-        };
-        reader.readAsDataURL(file);
-      } else {
-        this.receiptPreview = null;
+      this.zonesLoading = true;
+      try {
+        this.zones = await api.getZones(this.venueId);
+        if (this.zones.length === 0) {
+          this.zonesError = 'Для этого мероприятия нет доступных зон.';
+        }
+      } catch (err) {
+        this.zonesError = err instanceof Error ? err.message : 'Ошибка загрузки зон';
+      } finally {
+        this.zonesLoading = false;
       }
     },
 
-    removeFile() {
-      this.receiptFile = null;
-      this.receiptPreview = null;
+    selectedZone(): Zone | null {
+      return this.zones.find(z => z.id === this.selectedZoneId) ?? null;
     },
 
     validate(): string | null {
-      if (!this.name.trim()) return 'Введите имя';
+      if (!this.name.trim()) return 'Введите имя и фамилию';
       if (!this.phone.trim()) return 'Введите номер телефона';
-      if (!this.zone.trim()) return 'Укажите зону';
-      if (!this.price || this.price <= 0) return 'Укажите стоимость';
-      if (!this.receiptFile) return 'Загрузите чек об оплате';
+      if (!this.selectedZoneId) return 'Выберите зону';
+      const zone = this.selectedZone();
+      if (zone && zone.available <= 0) return 'В выбранной зоне нет свободных мест';
       return null;
     },
 
@@ -96,22 +85,15 @@ export function registerForm(): RegisterFormData {
       this.error = null;
 
       try {
-        let receiptBase64: string | undefined;
-        let receiptFilename: string | undefined;
-
-        if (this.receiptFile) {
-          receiptBase64 = await fileToBase64(this.receiptFile);
-          receiptFilename = this.receiptFile.name;
-        }
-
         this.result = await api.register({
           name: this.name.trim(),
           phone: this.phone.trim(),
-          zone: this.zone.trim(),
-          price: this.price!,
-          receiptBase64,
-          receiptFilename,
+          venueId: this.venueId,
+          zoneId: this.selectedZoneId,
         });
+
+        // Redirect to ticket page after successful booking
+        window.location.href = `ticket.html?id=${this.result.id}`;
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Произошла ошибка';
       } finally {
@@ -119,13 +101,4 @@ export function registerForm(): RegisterFormData {
       }
     },
   };
-}
-
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Ошибка чтения файла'));
-    reader.readAsDataURL(file);
-  });
 }

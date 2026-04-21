@@ -1,65 +1,41 @@
-# Tea-Ticket — Status
+﻿# Tea-Ticket — Status
 
-## Current Phase: ALL PHASES COMPLETE ✅
+## Current Phase: PHASE 2 IN PROGRESS
 
 ## What's Done
 
-### Phase 1: Database Setup ✅
-- [x] Google Sheet structure: `ID | Name | Phone | Zone | Price | Receipt_Link | Status | CheckedIn | CreatedAt`
-- [x] SHEET_ID: `1EDoEFUxw4B09wwROIQqg5yAzVWyo09DMKRWipiZRvwk`
-- [x] `initSheet()` executed — Tickets sheet created
+### Phase 1 — Original MVP (complete)
+All original phases (DB, GAS API, Landing, Ticket View, Admin Scanner) complete.
 
-### Phase 2: GAS API ✅
-- [x] Type system: `TicketRow`, `ApiResponse<T>`, `RegisterPayload`, `CheckinPayload`
-- [x] `doPost(register)` — creates ticket, generates unique ID, uploads receipt to Drive
-- [x] `doGet(getTicket)` — returns ticket data by ID
-- [x] `doPost(checkin)` — marks ticket as checked-in
-- [x] `doGet(health)` — health-check endpoint
-- [x] Deployed as Web App (v1)
+### Phase 2A — GAS Backend Refactor (complete)
+New booking flow: Booked -> Pending (receipt) -> Confirmed | Rejected | Expired
 
-### Phase 3: Public Landing ✅
-- [x] Vite + Alpine.js + TypeScript + Tailwind CSS v4 project
-- [x] Typed API service (`src/services/api.ts`)
-- [x] Registration form component with:
-  - Input validation (client-side)
-  - Receipt file upload (JPEG/PNG/WebP/PDF, 5MB limit)
-  - Image preview
-  - Loading state + error display
-  - Success screen with ticket ID
+- [x] config.ts — Venues / Zones sheets; updated Tickets columns (VenueID, ZoneID, ZoneName, BookedAt); VENUE_COL, ZONE_COL constants
+- [x] types.ts — VenueRow, ZoneRow, ZoneWithAvailability; updated TicketRow; Booked/Expired statuses; new payload interfaces
+- [x] sheets.ts — full refactor: CRUD for Venues and Zones; getZonesWithAvailability(); expireOldBookings(); updateTicketReceiptAndStatus()
+- [x] utils.ts — generateVenueId(), generateZoneId(); updated register validation; new validators
+- [x] Code.ts — new endpoints: getVenues, getZones, uploadReceipt, createVenue, createZone, updateZone, deleteZone; expireBookingsJob(); register returns zone with cardNumber
+- [x] GAS TypeScript build passes (no errors)
 
-### Phase 4: Ticket View ✅
-- [x] `/ticket.html?id=TT-XXX` — ticket page
-- [x] QR code generation (qrcode lib) when Status = Confirmed
-- [x] Status-dependent UI: Pending (⏳), Confirmed (QR), Rejected (❌)
-- [x] Ticket info card: ID, name, phone, zone, price
-- [x] Vite multi-page build config
+## Next Steps
 
-### Phase 5: Admin Scanner ✅
-- [x] `html5-qrcode` library for camera-based QR scanning
-- [x] Admin scanner component with:
-  - Camera activation (rear-facing preferred)
-  - QR decode → API ticket lookup → auto check-in
-  - Result states: ✅ success, ⚠️ already used, ❌ error
-  - Ticket details display after scan
-  - "Scan next" flow
-- [x] `/admin.html` — dark-themed scanner page
-- [x] Password protection (SHA-256 hash, client-side gate)
+### Phase 2B — Registration form (index.html)
+- [ ] Read ?venue=ID from URL
+- [ ] Load zones via getZones?venueId=...
+- [ ] Remove receipt upload from form
+- [ ] Button "Zabronirovat mesto"
+- [ ] After booking -> redirect to ticket.html?id=XXX
 
-### Deployment ✅
-- [x] `.gitignore` configured
-- [x] Vite `base: '/tea-ticket/'` for GitHub Pages project site
-- [x] GitHub Actions workflow (`.github/workflows/deploy.yml`)
-- [x] `npm run build` passes (tsc + vite build)
+### Phase 2C — Ticket page (ticket.html)
+- [ ] Status Booked -> zone, price, card number, 1h countdown timer, receipt upload form
+- [ ] Status Pending -> "Receipt received, awaiting confirmation"
+- [ ] Status Expired -> "Booking expired"
 
-## Status: PROJECT COMPLETE 🎉
+### Phase 2D — Management page (/manage.html)
+- [ ] Auth gate
+- [ ] Venues section
+- [ ] Zones section (with card number)
 
-All phases implemented. To deploy:
-1. Push to `main` branch on GitHub
-2. Enable GitHub Pages → Actions in repo settings
-3. The workflow will build and deploy automatically
-
-## Deploy Checklist (GAS — already done)
-1. ✅ `clasp create` → scriptId configured
-2. ✅ `npm run push` → code uploaded
-3. ✅ `clasp deploy` → Web App live
-4. ✅ GAS URL in `.env`
+### Deploy
+- [ ] clasp push && clasp deploy new GAS version
+- [ ] Set up time-driven trigger for expireBookingsJob (every 30 min)

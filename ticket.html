@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tea Ticket — Мой билет</title>
+  <title>Tea Ticket â€” ÐœÐ¾Ð¹ Ð±Ð¸Ð»ÐµÑ‚</title>
   <link rel="stylesheet" href="/src/styles/main.css" />
 </head>
 <body class="min-h-screen bg-gradient-to-br from-emerald-50 to-amber-50">
@@ -12,10 +12,10 @@
 
     <!-- Header -->
     <div class="text-center mb-8">
-      <a href="/" class="text-3xl font-bold text-emerald-800 no-underline">🍵 Tea Ticket</a>
+      <a href="/" class="text-3xl font-bold text-emerald-800 no-underline">ðŸµ Tea Ticket</a>
     </div>
 
-    <div x-data="ticketView" class="bg-white rounded-2xl shadow-lg overflow-hidden">
+    <div x-data="ticketView" x-init="init()" @destroy.window="destroy()" class="bg-white rounded-2xl shadow-lg overflow-hidden">
 
       <!-- Loading -->
       <template x-if="loading">
@@ -24,18 +24,18 @@
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
           </svg>
-          <span class="text-gray-500 mt-3">Загрузка билета…</span>
+          <span class="text-gray-500 mt-3">Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð±Ð¸Ð»ÐµÑ‚Ð°â€¦</span>
         </div>
       </template>
 
       <!-- Error -->
       <template x-if="!loading && error">
         <div class="text-center py-16 px-6">
-          <div class="text-5xl mb-4">😕</div>
-          <h2 class="text-lg font-semibold text-gray-800 mb-2">Билет не найден</h2>
+          <div class="text-5xl mb-4">ðŸ˜•</div>
+          <h2 class="text-lg font-semibold text-gray-800 mb-2">Ð‘Ð¸Ð»ÐµÑ‚ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½</h2>
           <p class="text-gray-500 text-sm" x-text="error"></p>
           <a href="/" class="inline-block mt-6 text-emerald-600 hover:text-emerald-700 font-medium">
-            ← На главную
+            â† ÐÐ° Ð³Ð»Ð°Ð²Ð½ÑƒÑŽ
           </a>
         </div>
       </template>
@@ -43,71 +43,215 @@
       <!-- Ticket card -->
       <template x-if="!loading && !error && ticket">
         <div>
+
           <!-- Status banner -->
           <div :class="statusColor" class="px-6 py-3 text-center font-medium text-sm">
             <span x-text="statusLabel"></span>
             <template x-if="ticket.checkedIn">
-              <span class="ml-2">· Вход выполнен ✓</span>
+              <span class="ml-2">Â· Ð’Ñ…Ð¾Ð´ Ð²Ñ‹Ð¿Ð¾Ð»Ð½ÐµÐ½ âœ“</span>
             </template>
           </div>
 
-          <div class="p-6">
+          <div class="p-6 space-y-6">
 
-            <!-- QR code (only for Confirmed) -->
+            <!-- â”€â”€ BOOKED: payment instructions â”€â”€ -->
+            <template x-if="ticket.status === 'Booked'">
+              <div class="space-y-5">
+
+                <!-- Countdown -->
+                <div class="flex flex-col items-center bg-blue-50 rounded-2xl px-4 py-5 gap-1">
+                  <p class="text-sm text-blue-600 font-medium">Ð’Ñ€ÐµÐ¼Ñ Ð½Ð° Ð¾Ð¿Ð»Ð°Ñ‚Ñƒ</p>
+                  <p
+                    class="text-4xl font-mono font-bold"
+                    :class="timeLeftMs < 5 * 60 * 1000 ? 'text-red-600' : 'text-blue-700'"
+                    x-text="formattedTime()"
+                  ></p>
+                  <p class="text-xs text-blue-500">Ð£ Ð²Ð°Ñ ÐµÑÑ‚ÑŒ 1 Ñ‡Ð°Ñ Ñ Ð¼Ð¾Ð¼ÐµÐ½Ñ‚Ð° Ð±Ñ€Ð¾Ð½Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ñ</p>
+                </div>
+
+                <!-- Payment info -->
+                <div class="bg-amber-50 rounded-2xl px-4 py-4 space-y-3">
+                  <p class="text-sm font-semibold text-amber-800">Ð˜Ð½ÑÑ‚Ñ€ÑƒÐºÑ†Ð¸Ñ Ð¿Ð¾ Ð¾Ð¿Ð»Ð°Ñ‚Ðµ</p>
+                  <p class="text-sm text-amber-700">
+                    ÐŸÐµÑ€ÐµÐ²ÐµÐ´Ð¸Ñ‚Ðµ <strong x-text="ticket.price + ' â‚¼'"></strong> Ð½Ð° ÐºÐ°Ñ€Ñ‚Ñƒ:
+                  </p>
+                  <template x-if="cardNumber">
+                    <div class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-amber-200">
+                      <span class="font-mono font-bold text-gray-800 tracking-wider" x-text="cardNumber"></span>
+                      <button
+                        type="button"
+                        @click="navigator.clipboard.writeText(cardNumber)"
+                        class="text-xs text-amber-600 hover:text-amber-800 transition font-medium"
+                      >
+                        ÐšÐ¾Ð¿Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ
+                      </button>
+                    </div>
+                  </template>
+                  <template x-if="!cardNumber">
+                    <p class="text-xs text-amber-600">Ð ÐµÐºÐ²Ð¸Ð·Ð¸Ñ‚Ñ‹ ÑƒÑ‚Ð¾Ñ‡Ð½Ð¸Ñ‚Ðµ Ñƒ Ð¾Ñ€Ð³Ð°Ð½Ð¸Ð·Ð°Ñ‚Ð¾Ñ€Ð¾Ð²</p>
+                  </template>
+                  <p class="text-sm text-amber-700">
+                    ÐŸÐ¾ÑÐ»Ðµ Ð¾Ð¿Ð»Ð°Ñ‚Ñ‹ Ð¿Ñ€Ð¸ÐºÑ€ÐµÐ¿Ð¸Ñ‚Ðµ ÑÐºÑ€Ð¸Ð½ÑˆÐ¾Ñ‚ Ñ‡ÐµÐºÐ° Ð½Ð¸Ð¶Ðµ.
+                  </p>
+                </div>
+
+                <!-- Receipt upload -->
+                <div>
+                  <p class="text-sm font-medium text-gray-700 mb-2">ÐŸÑ€Ð¸ÐºÑ€ÐµÐ¿Ð¸Ñ‚ÑŒ Ñ‡ÐµÐº Ð¾Ð± Ð¾Ð¿Ð»Ð°Ñ‚Ðµ</p>
+
+                  <template x-if="uploadDone">
+                    <div class="text-center py-4">
+                      <div class="text-3xl mb-2">âœ…</div>
+                      <p class="text-sm text-emerald-700 font-medium">Ð§ÐµÐº Ð¾Ñ‚Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½! Ð–Ð´Ñ‘Ð¼ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½Ð¸Ñ.</p>
+                    </div>
+                  </template>
+
+                  <template x-if="!uploadDone">
+                    <div class="space-y-3">
+
+                      <!-- Drop zone -->
+                      <template x-if="!receiptFile">
+                        <label
+                          for="receipt"
+                          class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition"
+                        >
+                          <span class="text-2xl text-gray-400">ðŸ“Ž</span>
+                          <span class="text-sm text-gray-500 mt-1">ÐÐ°Ð¶Ð¼Ð¸Ñ‚Ðµ Ð´Ð»Ñ Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ¸</span>
+                          <span class="text-xs text-gray-400 mt-0.5">JPEG, PNG, WebP, PDF â€” Ð´Ð¾ 5 ÐœÐ‘</span>
+                          <input
+                            id="receipt"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                            @change="handleFileSelect($event)"
+                            class="hidden"
+                          />
+                        </label>
+                      </template>
+
+                      <!-- Preview -->
+                      <template x-if="receiptFile">
+                        <div class="relative border border-gray-200 rounded-xl p-3">
+                          <template x-if="receiptPreview">
+                            <img
+                              :src="receiptPreview"
+                              alt="Ð§ÐµÐº"
+                              class="w-full h-40 object-contain rounded-lg bg-gray-50"
+                            />
+                          </template>
+                          <template x-if="!receiptPreview">
+                            <div class="flex items-center gap-2 py-2">
+                              <span class="text-2xl">ðŸ“„</span>
+                              <span x-text="receiptFile.name" class="text-sm text-gray-600 truncate"></span>
+                            </div>
+                          </template>
+                          <button
+                            type="button"
+                            @click="removeFile()"
+                            class="absolute top-2 right-2 w-7 h-7 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-200 transition"
+                          >âœ•</button>
+                        </div>
+                      </template>
+
+                      <!-- Upload error -->
+                      <template x-if="uploadError">
+                        <div class="bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3" x-text="uploadError"></div>
+                      </template>
+
+                      <!-- Submit button -->
+                      <button
+                        type="button"
+                        @click="submitReceipt()"
+                        :disabled="!receiptFile || uploadLoading"
+                        class="w-full py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+                      >
+                        <template x-if="uploadLoading">
+                          <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                          </svg>
+                        </template>
+                        <span x-text="uploadLoading ? 'ÐžÑ‚Ð¿Ñ€Ð°Ð²ÐºÐ°â€¦' : 'ÐžÑ‚Ð¿Ñ€Ð°Ð²Ð¸Ñ‚ÑŒ Ñ‡ÐµÐº'"></span>
+                      </button>
+
+                    </div>
+                  </template>
+                </div>
+
+              </div>
+            </template>
+
+            <!-- â”€â”€ CONFIRMED: QR code â”€â”€ -->
             <template x-if="ticket.status === 'Confirmed' && qrDataUrl">
-              <div class="text-center mb-6">
+              <div class="text-center">
                 <img
                   :src="qrDataUrl"
-                  alt="QR-код билета"
+                  alt="QR-ÐºÐ¾Ð´ Ð±Ð¸Ð»ÐµÑ‚Ð°"
                   class="mx-auto w-56 h-56 rounded-xl border border-gray-100"
                 />
-                <p class="text-xs text-gray-400 mt-2">Покажите QR-код на входе</p>
+                <p class="text-xs text-gray-400 mt-2">ÐŸÐ¾ÐºÐ°Ð¶Ð¸Ñ‚Ðµ QR-ÐºÐ¾Ð´ Ð½Ð° Ð²Ñ…Ð¾Ð´Ðµ</p>
               </div>
             </template>
 
-            <!-- Pending message -->
+            <!-- â”€â”€ PENDING â”€â”€ -->
             <template x-if="ticket.status === 'Pending'">
-              <div class="text-center mb-6 py-4">
-                <div class="text-4xl mb-3">⏳</div>
+              <div class="text-center py-4">
+                <div class="text-4xl mb-3">â³</div>
                 <p class="text-gray-600 text-sm">
-                  Ваш чек на проверке. QR-код появится после подтверждения оплаты.
+                  Ð’Ð°Ñˆ Ñ‡ÐµÐº Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½ Ð¸ Ð¿Ñ€Ð¾Ð²ÐµÑ€ÑÐµÑ‚ÑÑ. QR-ÐºÐ¾Ð´ Ð´Ð»Ñ Ð²Ñ…Ð¾Ð´Ð° Ð¿Ð¾ÑÐ²Ð¸Ñ‚ÑÑ Ð¿Ð¾ÑÐ»Ðµ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½Ð¸Ñ Ð¾Ð¿Ð»Ð°Ñ‚Ñ‹.
                 </p>
               </div>
             </template>
 
-            <!-- Rejected message -->
+            <!-- â”€â”€ REJECTED â”€â”€ -->
             <template x-if="ticket.status === 'Rejected'">
-              <div class="text-center mb-6 py-4">
-                <div class="text-4xl mb-3">❌</div>
+              <div class="text-center py-4">
+                <div class="text-4xl mb-3">âŒ</div>
                 <p class="text-gray-600 text-sm">
-                  К сожалению, оплата не подтверждена. Свяжитесь с организаторами.
+                  Ðš ÑÐ¾Ð¶Ð°Ð»ÐµÐ½Ð¸ÑŽ, Ð¾Ð¿Ð»Ð°Ñ‚Ð° Ð½Ðµ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½Ð°. Ð¡Ð²ÑÐ¶Ð¸Ñ‚ÐµÑÑŒ Ñ Ð¾Ñ€Ð³Ð°Ð½Ð¸Ð·Ð°Ñ‚Ð¾Ñ€Ð°Ð¼Ð¸.
                 </p>
               </div>
             </template>
 
-            <!-- Ticket info -->
+            <!-- â”€â”€ EXPIRED â”€â”€ -->
+            <template x-if="ticket.status === 'Expired'">
+              <div class="text-center py-4">
+                <div class="text-4xl mb-3">âŒ›</div>
+                <p class="text-gray-600 text-sm mb-4">
+                  Ð’Ñ€ÐµÐ¼Ñ Ð½Ð° Ð¾Ð¿Ð»Ð°Ñ‚Ñƒ Ð¸ÑÑ‚ÐµÐºÐ»Ð¾. Ð‘Ñ€Ð¾Ð½Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð¾Ñ‚Ð¼ÐµÐ½ÐµÐ½Ð¾.
+                </p>
+                <a
+                  :href="'/?venue=' + ticket.venueId"
+                  class="inline-block px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition"
+                >
+                  Ð—Ð°Ð±Ñ€Ð¾Ð½Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ ÑÐ½Ð¾Ð²Ð°
+                </a>
+              </div>
+            </template>
+
+            <!-- â”€â”€ Ticket info â”€â”€ -->
             <div class="space-y-3 border-t border-gray-100 pt-4">
               <div class="flex justify-between">
-                <span class="text-gray-500 text-sm">Номер</span>
+                <span class="text-gray-500 text-sm">ÐÐ¾Ð¼ÐµÑ€</span>
                 <span class="font-mono text-sm font-medium text-gray-800" x-text="ticket.id"></span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-500 text-sm">Имя</span>
+                <span class="text-gray-500 text-sm">Ð˜Ð¼Ñ</span>
                 <span class="text-sm text-gray-800" x-text="ticket.name"></span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-500 text-sm">Телефон</span>
+                <span class="text-gray-500 text-sm">Ð¢ÐµÐ»ÐµÑ„Ð¾Ð½</span>
                 <span class="text-sm text-gray-800" x-text="ticket.phone"></span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-500 text-sm">Зона</span>
-                <span class="text-sm text-gray-800" x-text="ticket.zone"></span>
+                <span class="text-gray-500 text-sm">Ð—Ð¾Ð½Ð°</span>
+                <span class="text-sm text-gray-800" x-text="ticket.zoneName"></span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-500 text-sm">Стоимость</span>
-                <span class="text-sm text-gray-800"><span x-text="ticket.price"></span> ₼</span>
+                <span class="text-gray-500 text-sm">Ð¡Ñ‚Ð¾Ð¸Ð¼Ð¾ÑÑ‚ÑŒ</span>
+                <span class="text-sm font-semibold text-gray-800"><span x-text="ticket.price"></span> â‚¼</span>
               </div>
             </div>
+
           </div>
         </div>
       </template>

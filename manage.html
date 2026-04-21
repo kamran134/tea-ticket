@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tea Ticket — Управление</title>
+  <link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+<body class="min-h-screen bg-gray-950">
+
+  <div class="max-w-2xl mx-auto px-4 py-6" x-data="managePanel" x-init="init()">
+
+    <!-- Header -->
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-white">🍵 Tea Ticket — Управление</h1>
+    </div>
+
+    <!-- ── Auth gate ── -->
+    <template x-if="!authenticated">
+      <div class="bg-gray-800 rounded-2xl p-6 max-w-sm mx-auto">
+        <form @submit.prevent="checkPassword()" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Пароль администратора</label>
+            <input
+              type="password"
+              x-model="passwordInput"
+              placeholder="Введите пароль"
+              autofocus
+              class="w-full px-4 py-2.5 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder-gray-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-800 outline-none transition"
+            />
+          </div>
+          <template x-if="authError">
+            <p class="text-red-400 text-sm" x-text="authError"></p>
+          </template>
+          <button type="submit" class="w-full py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition">
+            Войти
+          </button>
+        </form>
+      </div>
+    </template>
+
+    <!-- ── Main panel ── -->
+    <template x-if="authenticated">
+      <div class="space-y-6">
+
+        <!-- Global feedback toast -->
+        <template x-if="feedback">
+          <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-700 text-white text-sm font-medium px-5 py-2.5 rounded-full shadow-lg" x-text="feedback"></div>
+        </template>
+
+        <!-- ── Venues header ── -->
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-white">Мероприятия</h2>
+          <button
+            @click="addingVenue = !addingVenue"
+            class="text-sm px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg transition"
+          >
+            <span x-text="addingVenue ? 'Отмена' : '+ Добавить'"></span>
+          </button>
+        </div>
+
+        <!-- Add venue form -->
+        <template x-if="addingVenue">
+          <div class="bg-gray-800 rounded-2xl p-5 space-y-3">
+            <p class="text-sm font-medium text-gray-300">Новое мероприятие</p>
+            <input
+              type="text"
+              x-model="venueForm.name"
+              placeholder="Название"
+              class="w-full px-4 py-2.5 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder-gray-500 focus:border-emerald-500 outline-none"
+            />
+            <input
+              type="text"
+              x-model="venueForm.date"
+              placeholder="Дата (например: 10 мая 2026)"
+              class="w-full px-4 py-2.5 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder-gray-500 focus:border-emerald-500 outline-none"
+            />
+            <template x-if="venueFormError">
+              <p class="text-red-400 text-sm" x-text="venueFormError"></p>
+            </template>
+            <button
+              @click="submitVenue()"
+              :disabled="venueFormLoading"
+              class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium rounded-xl transition"
+              x-text="venueFormLoading ? 'Создание…' : 'Создать мероприятие'"
+            ></button>
+          </div>
+        </template>
+
+        <!-- Venues loading -->
+        <template x-if="venuesLoading">
+          <div class="text-center py-8 text-gray-500">Загрузка…</div>
+        </template>
+
+        <!-- Venues error -->
+        <template x-if="venuesError">
+          <div class="bg-red-900/40 text-red-400 text-sm rounded-xl px-4 py-3" x-text="venuesError"></div>
+        </template>
+
+        <!-- Venues list -->
+        <template x-if="!venuesLoading && venueStates.length === 0 && !venuesError">
+          <p class="text-gray-500 text-sm text-center py-6">Мероприятий пока нет. Создайте первое!</p>
+        </template>
+
+        <template x-for="state in venueStates" :key="state.venue.id">
+          <div class="bg-gray-800 rounded-2xl overflow-hidden">
+
+            <!-- Venue row -->
+            <div class="flex items-center gap-3 px-5 py-4 cursor-pointer" @click="toggleExpand(state)">
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-white truncate" x-text="state.venue.name"></p>
+                <p class="text-xs text-gray-400 mt-0.5" x-text="state.venue.date"></p>
+              </div>
+              <span
+                class="text-xs px-2 py-0.5 rounded-full font-medium"
+                :class="state.venue.active ? 'bg-emerald-900 text-emerald-300' : 'bg-gray-700 text-gray-400'"
+                x-text="state.venue.active ? 'Активно' : 'Неактивно'"
+              ></span>
+              <button
+                type="button"
+                @click.stop="copyLink(state.venue.id)"
+                class="text-xs px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition"
+              >
+                🔗 Ссылка
+              </button>
+              <svg
+                class="w-4 h-4 text-gray-400 transition-transform flex-shrink-0"
+                :class="state.expanded ? 'rotate-180' : ''"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+
+            <!-- Zones section (expanded) -->
+            <template x-if="state.expanded">
+              <div class="border-t border-gray-700 px-5 py-4 space-y-4">
+
+                <!-- Zones loading -->
+                <template x-if="state.zonesLoading">
+                  <p class="text-gray-500 text-sm text-center py-3">Загрузка зон…</p>
+                </template>
+
+                <!-- Zones list -->
+                <template x-if="!state.zonesLoading">
+                  <div class="space-y-3">
+
+                    <template x-if="state.zones.length === 0">
+                      <p class="text-gray-500 text-sm">Зон пока нет. Добавьте первую.</p>
+                    </template>
+
+                    <template x-for="zone in state.zones" :key="zone.id">
+                      <div class="bg-gray-750 rounded-xl border border-gray-700 overflow-hidden">
+
+                        <!-- View mode -->
+                        <template x-if="state.editingZoneId !== zone.id">
+                          <div class="flex items-start gap-3 px-4 py-3">
+                            <div class="flex-1 min-w-0 space-y-1">
+                              <div class="flex items-center gap-2">
+                                <span class="font-medium text-white text-sm" x-text="zone.name"></span>
+                                <span class="text-xs text-gray-400">·</span>
+                                <span class="text-sm font-semibold text-emerald-400" x-text="zone.price + ' ₼'"></span>
+                              </div>
+                              <div class="text-xs text-gray-400 space-y-0.5">
+                                <p>Карта: <span class="font-mono text-gray-300" x-text="zone.cardNumber"></span></p>
+                                <p>Мест: <span class="text-gray-300" x-text="zone.capacity"></span> &nbsp;·&nbsp; Свободно: <span class="text-emerald-400" x-text="zone.available"></span></p>
+                              </div>
+                            </div>
+                            <div class="flex gap-2 flex-shrink-0">
+                              <button
+                                type="button"
+                                @click="startEditZone(state, zone)"
+                                class="text-xs px-2.5 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition"
+                              >Изм.</button>
+                              <button
+                                type="button"
+                                @click="removeZone(state, zone.id)"
+                                class="text-xs px-2.5 py-1 bg-red-900/50 hover:bg-red-900 text-red-400 rounded-lg transition"
+                              >Удал.</button>
+                            </div>
+                          </div>
+                        </template>
+
+                        <!-- Edit mode -->
+                        <template x-if="state.editingZoneId === zone.id">
+                          <div class="px-4 py-3 space-y-2">
+                            <p class="text-xs font-medium text-gray-400 mb-2">Редактирование зоны</p>
+                            <input type="text" x-model="state.zoneForm.name" placeholder="Название" class="w-full px-3 py-2 text-sm rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 outline-none focus:border-emerald-500" />
+                            <div class="grid grid-cols-2 gap-2">
+                              <input type="number" x-model.number="state.zoneForm.price" placeholder="Цена ₼" min="0" class="px-3 py-2 text-sm rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 outline-none focus:border-emerald-500" />
+                              <input type="number" x-model.number="state.zoneForm.capacity" placeholder="Мест" min="1" class="px-3 py-2 text-sm rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 outline-none focus:border-emerald-500" />
+                            </div>
+                            <input type="text" x-model="state.zoneForm.cardNumber" placeholder="Номер карты" class="w-full px-3 py-2 text-sm rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 outline-none focus:border-emerald-500" />
+                            <input type="number" x-model.number="state.zoneForm.sortOrder" placeholder="Порядок сортировки" class="w-full px-3 py-2 text-sm rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 outline-none focus:border-emerald-500" />
+                            <div class="flex gap-2 pt-1">
+                              <button @click="submitEditZone(state)" class="flex-1 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition">Сохранить</button>
+                              <button @click="cancelEditZone(state)" class="flex-1 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition">Отмена</button>
+                            </div>
+                          </div>
+                        </template>
+
+                      </div>
+                    </template>
+
+                    <!-- Add zone button / form -->
+                    <template x-if="!state.addingZone">
+                      <button
+                        @click="state.addingZone = true; state.zoneForm = { name: '', price: null, cardNumber: '', capacity: null, sortOrder: 0 }"
+                        class="w-full py-2.5 text-sm border-2 border-dashed border-gray-600 hover:border-emerald-500 text-gray-400 hover:text-emerald-400 rounded-xl transition"
+                      >
+                        + Добавить зону
+                      </button>
+                    </template>
+
+                    <template x-if="state.addingZone">
+                      <div class="bg-gray-750 rounded-xl border border-gray-600 px-4 py-3 space-y-2">
+                        <p class="text-xs font-medium text-gray-400">Новая зона</p>
+                        <input type="text" x-model="state.zoneForm.name" placeholder="Название (напр. Фан-зона)" class="w-full px-3 py-2 text-sm rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 outline-none focus:border-emerald-500" />
+                        <div class="grid grid-cols-2 gap-2">
+                          <input type="number" x-model.number="state.zoneForm.price" placeholder="Цена ₼" min="0" class="px-3 py-2 text-sm rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 outline-none focus:border-emerald-500" />
+                          <input type="number" x-model.number="state.zoneForm.capacity" placeholder="Мест" min="1" class="px-3 py-2 text-sm rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 outline-none focus:border-emerald-500" />
+                        </div>
+                        <input type="text" x-model="state.zoneForm.cardNumber" placeholder="Номер карты для оплаты" class="w-full px-3 py-2 text-sm rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 outline-none focus:border-emerald-500" />
+                        <input type="number" x-model.number="state.zoneForm.sortOrder" placeholder="Порядок (0 = первый)" class="w-full px-3 py-2 text-sm rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 outline-none focus:border-emerald-500" />
+                        <div class="flex gap-2 pt-1">
+                          <button @click="submitAddZone(state)" class="flex-1 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition">Добавить</button>
+                          <button @click="state.addingZone = false" class="flex-1 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition">Отмена</button>
+                        </div>
+                      </div>
+                    </template>
+
+                  </div>
+                </template>
+
+              </div>
+            </template>
+
+          </div>
+        </template>
+
+        <!-- Scanner link -->
+        <div class="text-center pt-2">
+          <a href="admin.html" class="text-sm text-gray-500 hover:text-gray-300 transition">
+            → Перейти к сканеру QR-кодов
+          </a>
+        </div>
+
+      </div>
+    </template>
+
+  </div>
+
+  <script type="module" src="/src/manage.ts"></script>
+</body>
+</html>

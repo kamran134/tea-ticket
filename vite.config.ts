@@ -13,9 +13,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
+        main:   resolve(__dirname, 'index.html'),
         ticket: resolve(__dirname, 'ticket.html'),
-        admin: resolve(__dirname, 'admin.html'),
+        admin:  resolve(__dirname, 'admin.html'),
+        manage: resolve(__dirname, 'manage.html'),
       },
     },
   },

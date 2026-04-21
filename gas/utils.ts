@@ -2,15 +2,22 @@
 // ID generation
 // ──────────────────────────────────────────────
 
-/**
- * Generates a unique ticket ID.
- * Format: TT-<timestamp_base36>-<random_4chars>
- * Example: TT-LN4Q8FK0-A3B2
- */
 function generateTicketId(): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2, 6);
   return `TT-${timestamp}-${random}`.toUpperCase();
+}
+
+function generateVenueId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 5);
+  return `V-${timestamp}-${random}`.toUpperCase();
+}
+
+function generateZoneId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 5);
+  return `Z-${timestamp}-${random}`.toUpperCase();
 }
 
 // ──────────────────────────────────────────────
@@ -36,12 +43,39 @@ function errorResponse(error: string): GoogleAppsScript.Content.TextOutput {
 // ──────────────────────────────────────────────
 
 function validateRegisterPayload(body: Record<string, unknown>): boolean {
-  const { name, phone, zone, price } = body;
+  const { name, phone, venueId, zoneId } = body;
   return (
-    typeof name  === 'string' && name.trim().length  > 0 &&
-    typeof phone === 'string' && phone.trim().length > 0 &&
-    typeof zone  === 'string' && zone.trim().length  > 0 &&
-    typeof price === 'number' && price > 0
+    typeof name    === 'string' && name.trim().length    > 0 &&
+    typeof phone   === 'string' && phone.trim().length   > 0 &&
+    typeof venueId === 'string' && venueId.trim().length > 0 &&
+    typeof zoneId  === 'string' && zoneId.trim().length  > 0
+  );
+}
+
+function validateUploadReceiptPayload(body: Record<string, unknown>): boolean {
+  const { id, receiptBase64 } = body;
+  return (
+    typeof id            === 'string' && id.trim().length            > 0 &&
+    typeof receiptBase64 === 'string' && receiptBase64.trim().length > 0
+  );
+}
+
+function validateCreateVenuePayload(body: Record<string, unknown>): boolean {
+  const { name, date } = body;
+  return (
+    typeof name === 'string' && name.trim().length > 0 &&
+    typeof date === 'string' && date.trim().length > 0
+  );
+}
+
+function validateCreateZonePayload(body: Record<string, unknown>): boolean {
+  const { venueId, name, price, cardNumber, capacity } = body;
+  return (
+    typeof venueId    === 'string' && venueId.trim().length    > 0 &&
+    typeof name       === 'string' && name.trim().length       > 0 &&
+    typeof price      === 'number' && price                    >= 0 &&
+    typeof cardNumber === 'string' && cardNumber.trim().length > 0 &&
+    typeof capacity   === 'number' && capacity                 >  0
   );
 }
 
