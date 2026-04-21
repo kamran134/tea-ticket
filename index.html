@@ -47,19 +47,49 @@
       <template x-if="venueId && !zonesLoading && !zonesError">
         <form @submit.prevent="submit()" class="space-y-5">
 
-          <!-- Name -->
-          <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+          <!-- Name + guests -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
               Имя и фамилия
             </label>
+
+            <!-- Buyer -->
             <input
               id="name"
               type="text"
               x-model="name"
-              placeholder="Иван Иванов"
+              placeholder="Некто Нектович"
               autocomplete="name"
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
             />
+
+            <!-- Guest rows -->
+            <template x-for="(guest, index) in guests" :key="index">
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  :placeholder="'Гость ' + (index + 1)"
+                  x-model="guests[index]"
+                  class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
+                />
+                <button
+                  type="button"
+                  @click="removeGuest(index)"
+                  class="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl border border-red-200 text-red-500 hover:bg-red-50 transition"
+                  title="Убрать гостя"
+                >✕</button>
+              </div>
+            </template>
+
+            <!-- Add guest button -->
+            <button
+              type="button"
+              @click="addGuest()"
+              class="flex items-center gap-1.5 text-sm text-emerald-700 hover:text-emerald-900 font-medium transition"
+            >
+              <span class="text-xl leading-none">+</span>
+              <span>Добавить гостя</span>
+            </button>
           </div>
 
           <!-- Phone -->
@@ -71,7 +101,7 @@
               id="phone"
               type="tel"
               x-model="phone"
-              placeholder="+7 (777) 123-45-67"
+              placeholder="+994 (50) 123-45-67"
               autocomplete="tel"
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
             />
@@ -115,9 +145,15 @@
 
           <!-- Selected zone summary -->
           <template x-if="selectedZone()">
-            <div class="bg-emerald-50 rounded-xl px-4 py-3 flex items-center justify-between">
-              <span class="text-sm text-gray-600">К оплате:</span>
-              <span class="text-lg font-bold text-emerald-700" x-text="selectedZone().price + ' ₼'"></span>
+            <div class="bg-emerald-50 rounded-xl px-4 py-3 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">
+                  <span x-text="1 + guests.length"></span>
+                  <span x-text="(1 + guests.length) === 1 ? ' участник' : ' участника'"></span>
+                  × <span x-text="selectedZone().price + ' ₼'"></span>
+                </span>
+                <span class="text-lg font-bold text-emerald-700" x-text="totalPrice() + ' ₼'"></span>
+              </div>
             </div>
           </template>
 

@@ -51,7 +51,7 @@ export const api = {
     return get<Zone[]>('getZones', { venueId });
   },
 
-  register(payload: { name: string; phone: string; venueId: string; zoneId: string }) {
+  register(payload: { name: string; phone: string; venueId: string; zoneId: string; guests?: string[] }) {
     return post<RegisterResult>({ action: 'register', ...payload });
   },
 
@@ -61,6 +61,18 @@ export const api = {
 
   checkin(id: string) {
     return post<Ticket>({ action: 'checkin', id });
+  },
+
+  checkinGroup(groupId: string, personIds: string[]) {
+    return post<{ groupId: string; members: import('@/types').GroupMember[] }>({
+      action: 'checkinGroup',
+      groupId,
+      personIds,
+    });
+  },
+
+  getTicketGroup(groupId: string) {
+    return get<Ticket>('getTicketGroup', { groupId });
   },
 
   // Admin: venues

@@ -9,6 +9,7 @@ interface RegisterFormData {
   name: string;
   phone: string;
   selectedZoneId: string;
+  guests: string[];
 
   // State
   zones: Zone[];
@@ -20,6 +21,9 @@ interface RegisterFormData {
 
   init(): Promise<void>;
   selectedZone(): Zone | null;
+  totalPrice(): number;
+  addGuest(): void;
+  removeGuest(index: number): void;
   validate(): string | null;
   submit(): Promise<void>;
 }
@@ -31,6 +35,7 @@ export function registerForm(): RegisterFormData {
     name: '',
     phone: '',
     selectedZoneId: '',
+    guests: [],
 
     zones: [],
     zonesLoading: false,
@@ -65,12 +70,32 @@ export function registerForm(): RegisterFormData {
       return this.zones.find(z => z.id === this.selectedZoneId) ?? null;
     },
 
+    totalPrice(): number {
+      const zone = this.selectedZone();
+      if (!zone) return 0;
+      return zone.price * (1 + this.guests.length);
+    },
+
+    addGuest() {
+      this.guests.push('');
+    },
+
+    removeGuest(index: number) {
+      this.guests.splice(index, 1);
+    },
+
     validate(): string | null {
       if (!this.name.trim()) return 'Введите имя и фамилию';
       if (!this.phone.trim()) return 'Введите номер телефона';
       if (!this.selectedZoneId) return 'Выберите зону';
       const zone = this.selectedZone();
       if (zone && zone.available <= 0) return 'В выбранной зоне нет свободных мест';
+      if (zone && zone.available < 1 + this.guests.length) {
+        return `В выбранной зоне недостаточно мест для группы из ${1 + this.guests.length} человек`;
+      }
+      for (let i = 0; i < this.guests.length; i++) {
+        if (!this.guests[i].trim()) return `Введите имя гостя ${i + 1}`;
+      }
       return null;
     },
 
@@ -90,6 +115,7 @@ export function registerForm(): RegisterFormData {
           phone: this.phone.trim(),
           venueId: this.venueId,
           zoneId: this.selectedZoneId,
+          guests: this.guests.map(g => g.trim()).filter(g => g.length > 0),
         });
 
         // Redirect to ticket page after successful booking

@@ -17,6 +17,15 @@ interface TicketRow {
   checkedIn: boolean;
   createdAt: string;
   bookedAt: string;
+  /** Shared group ID. Equals id for solo tickets; empty string for legacy rows. */
+  groupId: string;
+}
+
+/** A single member of a group ticket, returned by getTicketGroup. */
+interface GroupMember {
+  id: string;
+  name: string;
+  checkedIn: boolean;
 }
 
 interface VenueRow {
@@ -55,6 +64,14 @@ interface RegisterPayload {
   phone: string;
   venueId: string;
   zoneId: string;
+  /** Additional guest names (without the buyer). */
+  guests?: string[];
+}
+
+interface CheckinGroupPayload {
+  groupId: string;
+  /** IDs of individual member rows to check in. */
+  personIds: string[];
 }
 
 interface UploadReceiptPayload {
@@ -94,4 +111,6 @@ interface RegisterResult {
   id: string;
   status: TicketStatus;
   zone: ZoneRow;
+  /** All group members (including buyer). Length > 1 for group tickets. */
+  members: GroupMember[];
 }

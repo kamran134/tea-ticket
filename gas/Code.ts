@@ -22,7 +22,20 @@ function doGet(
       if (!id) return errorResponse('Missing parameter: id');
       const ticket = findTicketById(id);
       if (!ticket) return errorResponse('Ticket not found');
-      return successResponse(ticket);
+      // Also return all group members
+      const members = findMembersByGroupId(ticket.groupId);
+      return successResponse({ ...ticket, members });
+    }
+
+    case 'getTicketGroup': {
+      const groupId = e.parameter.groupId;
+      if (!groupId) return errorResponse('Missing parameter: groupId');
+      const members = findMembersByGroupId(groupId);
+      if (members.length === 0) return errorResponse('Group not found');
+      // Return the buyer's ticket (main row) plus members
+      const mainTicket = findTicketById(groupId);
+      if (!mainTicket) return errorResponse('Main ticket not found');
+      return successResponse({ ...mainTicket, members });
     }
 
     case 'getVenues':
@@ -53,6 +66,7 @@ function doPost(
       case 'register':       return handleRegister(body);
       case 'uploadReceipt':  return handleUploadReceipt(body);
       case 'checkin':        return handleCheckin(body);
+      case 'checkinGroup':   return handleCheckinGroup(body);
       case 'createVenue':    return handleCreateVenue(body);
       case 'createZone':     return handleCreateZone(body);
       case 'updateZone':     return handleUpdateZone(body);
@@ -78,6 +92,12 @@ function handleRegister(
   }
 
   const payload = body as unknown as RegisterPayload;
+  const guests  = Array.isArray(payload.guests)
+    ? (payload.guests as unknown[])
+        .filter((g): g is string => typeof g === 'string' && (g as string).trim().length > 0)
+        .map(g => (g as string).trim())
+    : [];
+  const totalPeople = 1 + guests.length;
 
   const zone = findZoneById(payload.zoneId);
   if (!zone) return errorResponse('Zone not found');
@@ -85,29 +105,53 @@ function handleRegister(
 
   const availability = getZonesWithAvailability(payload.venueId);
   const zoneAvail    = availability.find(z => z.id === payload.zoneId);
-  if (!zoneAvail || zoneAvail.available <= 0) {
-    return errorResponse('No seats available in the selected zone');
+  if (!zoneAvail || zoneAvail.available < totalPeople) {
+    return errorResponse('Not enough seats available in the selected zone');
   }
 
-  const now = new Date().toISOString();
-  const ticket: TicketRow = {
-    id:          generateTicketId(),
+  const now     = new Date().toISOString();
+  const groupId = generateTicketId(); // Buyer's ID also serves as groupId
+
+  const buyerTicket: TicketRow = {
+    id:          groupId,
     name:        payload.name.trim(),
     phone:       payload.phone.trim(),
     venueId:     payload.venueId,
     zoneId:      payload.zoneId,
     zoneName:    zone.name,
-    price:       zone.price,
+    price:       zone.price * totalPeople,
     receiptLink: '',
     status:      'Booked',
     checkedIn:   false,
     createdAt:   now,
     bookedAt:    now,
+    groupId,
   };
 
-  appendTicket(ticket);
+  appendTicket(buyerTicket);
 
-  const result: RegisterResult = { id: ticket.id, status: ticket.status, zone };
+  // Create a row for each additional guest
+  for (const guestName of guests) {
+    const guestTicket: TicketRow = {
+      id:          generateTicketId(),
+      name:        guestName,
+      phone:       '',
+      venueId:     payload.venueId,
+      zoneId:      payload.zoneId,
+      zoneName:    zone.name,
+      price:       0,
+      receiptLink: '',
+      status:      'Booked',
+      checkedIn:   false,
+      createdAt:   now,
+      bookedAt:    now,
+      groupId,
+    };
+    appendTicket(guestTicket);
+  }
+
+  const members = findMembersByGroupId(groupId);
+  const result: RegisterResult = { id: groupId, status: 'Booked', zone, members };
   return successResponse(result);
 }
 
@@ -159,6 +203,32 @@ function handleCheckin(
 
   const updated = updateTicketCheckedIn(id);
   return successResponse(updated);
+}
+
+function handleCheckinGroup(
+  body: Record<string, unknown>,
+): GoogleAppsScript.Content.TextOutput {
+  const { groupId, personIds } = body;
+
+  if (!groupId || typeof groupId !== 'string') {
+    return errorResponse('Missing or invalid field: groupId');
+  }
+  if (!Array.isArray(personIds) || personIds.length === 0) {
+    return errorResponse('Missing or invalid field: personIds (non-empty array expected)');
+  }
+
+  const mainTicket = findTicketById(groupId);
+  if (!mainTicket) return errorResponse('Group ticket not found');
+
+  if (mainTicket.status !== 'Confirmed') {
+    return errorResponse(
+      `Cannot check in: ticket status is "${mainTicket.status}", expected "Confirmed"`,
+    );
+  }
+
+  const validIds = (personIds as unknown[]).filter((p): p is string => typeof p === 'string');
+  const updatedMembers = checkinGroupMembers(groupId, validIds);
+  return successResponse({ groupId, members: updatedMembers });
 }
 
 function handleCreateVenue(

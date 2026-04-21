@@ -72,60 +72,134 @@
       <template x-if="result && !loading">
         <div class="space-y-4">
 
-          <!-- Result card -->
-          <div
-            class="rounded-2xl p-6 text-center"
-            :class="{
-              'bg-emerald-900/50 border border-emerald-600': result.type === 'success',
-              'bg-amber-900/50 border border-amber-600': result.type === 'already',
-              'bg-red-900/50 border border-red-600': result.type === 'error'
-            }"
-          >
-            <div class="text-5xl mb-3">
-              <span x-show="result.type === 'success'">✅</span>
-              <span x-show="result.type === 'already'">⚠️</span>
-              <span x-show="result.type === 'error'">❌</span>
-            </div>
-            <p
-              class="text-lg font-semibold mb-1"
-              :class="{
-                'text-emerald-300': result.type === 'success',
-                'text-amber-300': result.type === 'already',
-                'text-red-300': result.type === 'error'
-              }"
-              x-text="result.message"
-            ></p>
-          </div>
+          <!-- ── Group check-in panel ── -->
+          <template x-if="result.type === 'group'">
+            <div class="bg-gray-800 rounded-2xl p-5 space-y-4">
+              <p class="text-white font-semibold text-center">Групповой билет</p>
+              <p class="text-gray-400 text-sm text-center">Отметьте тех, кто пришёл сейчас</p>
 
-          <!-- Ticket details -->
-          <template x-if="result.ticket">
-            <div class="bg-gray-800 rounded-2xl p-5 space-y-2">
-              <div class="flex justify-between">
-                <span class="text-gray-500 text-sm">Номер</span>
-                <span class="font-mono text-sm text-white" x-text="result.ticket.id"></span>
+              <div class="space-y-2">
+                <template x-for="member in result.ticket.members" :key="member.id">
+                  <label
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition"
+                    :class="member.checkedIn
+                      ? 'bg-gray-700 opacity-50 cursor-not-allowed'
+                      : isPersonSelected(member.id)
+                        ? 'bg-emerald-900/60 border border-emerald-600'
+                        : 'bg-gray-700 border border-transparent hover:border-gray-500'"
+                  >
+                    <input
+                      type="checkbox"
+                      :checked="member.checkedIn || isPersonSelected(member.id)"
+                      :disabled="member.checkedIn"
+                      @change="togglePerson(member.id)"
+                      class="accent-emerald-500 w-4 h-4 flex-shrink-0"
+                    />
+                    <span
+                      class="text-sm"
+                      :class="member.checkedIn ? 'text-gray-500 line-through' : 'text-white'"
+                      x-text="member.name"
+                    ></span>
+                    <template x-if="member.checkedIn">
+                      <span class="ml-auto text-xs text-gray-500">уже прошёл</span>
+                    </template>
+                  </label>
+                </template>
               </div>
-              <div class="flex justify-between">
-                <span class="text-gray-500 text-sm">Имя</span>
-                <span class="text-sm text-white" x-text="result.ticket.name"></span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-500 text-sm">Зона</span>
-                <span class="text-sm text-white" x-text="result.ticket.zone"></span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-500 text-sm">Телефон</span>
-                <span class="text-sm text-white" x-text="result.ticket.phone"></span>
-              </div>
+
+              <button
+                @click="checkinSelectedMembers()"
+                :disabled="selectedPersonIds.length === 0"
+                class="w-full py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                x-text="'Пропустить выбранных (' + selectedPersonIds.length + ')'"
+              ></button>
+
+              <button
+                @click="reset()"
+                class="w-full py-2 text-sm text-gray-400 hover:text-white transition"
+              >
+                Отмена — сканировать следующий
+              </button>
             </div>
           </template>
 
-          <!-- Scan again -->
-          <button
-            @click="reset()"
-            class="w-full py-3 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition"
-          >
-            Сканировать следующий
-          </button>
+          <!-- ── Solo / final result card ── -->
+          <template x-if="result.type !== 'group'">
+            <div class="space-y-4">
+
+              <div
+                class="rounded-2xl p-6 text-center"
+                :class="{
+                  'bg-emerald-900/50 border border-emerald-600': result.type === 'success',
+                  'bg-amber-900/50 border border-amber-600': result.type === 'already',
+                  'bg-red-900/50 border border-red-600': result.type === 'error'
+                }"
+              >
+                <div class="text-5xl mb-3">
+                  <span x-show="result.type === 'success'">✅</span>
+                  <span x-show="result.type === 'already'">⚠️</span>
+                  <span x-show="result.type === 'error'">❌</span>
+                </div>
+                <p
+                  class="text-lg font-semibold mb-1"
+                  :class="{
+                    'text-emerald-300': result.type === 'success',
+                    'text-amber-300': result.type === 'already',
+                    'text-red-300': result.type === 'error'
+                  }"
+                  x-text="result.message"
+                ></p>
+              </div>
+
+              <!-- Ticket details -->
+              <template x-if="result.ticket">
+                <div class="bg-gray-800 rounded-2xl p-5 space-y-2">
+                  <div class="flex justify-between">
+                    <span class="text-gray-500 text-sm">Номер</span>
+                    <span class="font-mono text-sm text-white" x-text="result.ticket.id"></span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-500 text-sm">Имя</span>
+                    <span class="text-sm text-white" x-text="result.ticket.name"></span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-500 text-sm">Зона</span>
+                    <span class="text-sm text-white" x-text="result.ticket.zoneName"></span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-500 text-sm">Телефон</span>
+                    <span class="text-sm text-white" x-text="result.ticket.phone"></span>
+                  </div>
+
+                  <!-- Group members summary after check-in -->
+                  <template x-if="result.ticket.members && result.ticket.members.length > 1">
+                    <div class="pt-2 border-t border-gray-700 space-y-1">
+                      <p class="text-xs text-gray-500 mb-1">Участники группы:</p>
+                      <template x-for="m in result.ticket.members" :key="m.id">
+                        <div class="flex items-center gap-2 text-sm">
+                          <span x-show="m.checkedIn" class="text-emerald-400 text-xs">✓</span>
+                          <span x-show="!m.checkedIn" class="text-gray-600 text-xs">○</span>
+                          <span
+                            :class="m.checkedIn ? 'text-gray-400 line-through' : 'text-white'"
+                            x-text="m.name"
+                          ></span>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </template>
+
+              <!-- Scan again -->
+              <button
+                @click="reset()"
+                class="w-full py-3 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition"
+              >
+                Сканировать следующий
+              </button>
+
+            </div>
+          </template>
 
         </div>
       </template>

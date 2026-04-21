@@ -63,6 +63,7 @@ function appendTicket(ticket: TicketRow): void {
     ticket.checkedIn,
     ticket.createdAt,
     ticket.bookedAt,
+    ticket.groupId,
   ]);
 }
 
@@ -111,6 +112,48 @@ function updateTicketCheckedIn(id: string): TicketRow | null {
 }
 
 /**
+ * Checks in specific members of a group by their individual row IDs.
+ * Returns all members of the group after the update.
+ */
+function checkinGroupMembers(groupId: string, personIds: string[]): GroupMember[] {
+  const sheet = getSheet();
+  const data  = sheet.getDataRange().getValues();
+  const idSet = new Set(personIds);
+
+  for (let i = 1; i < data.length; i++) {
+    const rowGroupId  = String(data[i][COL.GROUP_ID]) || String(data[i][COL.ID]);
+    const rowId       = String(data[i][COL.ID]);
+    if (rowGroupId === groupId && idSet.has(rowId)) {
+      sheet.getRange(i + 1, COL.CHECKED_IN + 1).setValue(true);
+    }
+  }
+
+  return findMembersByGroupId(groupId);
+}
+
+/**
+ * Returns all member rows for a given groupId.
+ * For legacy rows (no GroupID stored), falls back to a single-member result.
+ */
+function findMembersByGroupId(groupId: string): GroupMember[] {
+  const data    = getSheet().getDataRange().getValues();
+  const members: GroupMember[] = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const rowGroupId = String(data[i][COL.GROUP_ID]) || String(data[i][COL.ID]);
+    if (rowGroupId === groupId) {
+      members.push({
+        id:        String(data[i][COL.ID]),
+        name:      String(data[i][COL.NAME]),
+        checkedIn: data[i][COL.CHECKED_IN] === true || data[i][COL.CHECKED_IN] === 'TRUE',
+      });
+    }
+  }
+
+  return members;
+}
+
+/**
  * Marks Booked tickets older than BOOKING_EXPIRY_MINUTES as Expired.
  * Called by the time-driven trigger.
  */
@@ -132,8 +175,9 @@ function expireOldBookings(): void {
 // ── Row ↔ Object mapping ─────────────────────
 
 function rowToTicket(row: unknown[]): TicketRow {
+  const id = String(row[COL.ID]);
   return {
-    id:          String(row[COL.ID]),
+    id,
     name:        String(row[COL.NAME]),
     phone:       String(row[COL.PHONE]),
     venueId:     String(row[COL.VENUE_ID]),
@@ -145,6 +189,8 @@ function rowToTicket(row: unknown[]): TicketRow {
     checkedIn:   row[COL.CHECKED_IN] === true || row[COL.CHECKED_IN] === 'TRUE',
     createdAt:   String(row[COL.CREATED_AT]),
     bookedAt:    String(row[COL.BOOKED_AT]),
+    // Backward compat: legacy rows have no GroupID — treat as solo (groupId = id)
+    groupId:     String(row[COL.GROUP_ID] ?? '') || id,
   };
 }
 

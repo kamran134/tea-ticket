@@ -1,5 +1,11 @@
 export type TicketStatus = 'Booked' | 'Pending' | 'Confirmed' | 'Rejected' | 'Expired';
 
+export interface GroupMember {
+  id: string;
+  name: string;
+  checkedIn: boolean;
+}
+
 export interface Ticket {
   id: string;
   name: string;
@@ -13,6 +19,10 @@ export interface Ticket {
   checkedIn: boolean;
   createdAt: string;
   bookedAt: string;
+  /** Shared group ID. Equals id for solo tickets. */
+  groupId: string;
+  /** All members of the group, including the buyer. */
+  members: GroupMember[];
 }
 
 export interface Zone {
@@ -43,4 +53,5 @@ export interface RegisterResult {
   id: string;
   status: TicketStatus;
   zone: Zone;
+  members: GroupMember[];
 }

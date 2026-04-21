@@ -25,11 +25,12 @@ const COL = {
   CHECKED_IN:   9,
   CREATED_AT:   10,
   BOOKED_AT:    11,
+  GROUP_ID:     12, // Shared ID for group tickets; equals ID for solo tickets
 } as const;
 
 const SHEET_HEADERS: string[] = [
   'ID', 'Name', 'Phone', 'VenueID', 'ZoneID', 'ZoneName', 'Price',
-  'Receipt_Link', 'Status', 'CheckedIn', 'CreatedAt', 'BookedAt',
+  'Receipt_Link', 'Status', 'CheckedIn', 'CreatedAt', 'BookedAt', 'GroupID',
 ];
 
 /** Zero-based column indices for the Venues sheet. */
