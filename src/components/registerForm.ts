@@ -1,6 +1,10 @@
 import { api } from '@/services/api';
 import type { RegisterResult, Zone } from '@/types';
 
+interface GuestEntry {
+  name: string;
+}
+
 interface RegisterFormData {
   // URL param
   venueId: string;
@@ -9,7 +13,7 @@ interface RegisterFormData {
   name: string;
   phone: string;
   selectedZoneId: string;
-  guests: string[];
+  guests: GuestEntry[];
 
   // State
   zones: Zone[];
@@ -35,7 +39,7 @@ export function registerForm(): RegisterFormData {
     name: '',
     phone: '',
     selectedZoneId: '',
-    guests: [],
+    guests: [] as GuestEntry[],
 
     zones: [],
     zonesLoading: false,
@@ -77,7 +81,7 @@ export function registerForm(): RegisterFormData {
     },
 
     addGuest() {
-      this.guests.push('');
+      this.guests.push({ name: '' });
     },
 
     removeGuest(index: number) {
@@ -94,7 +98,7 @@ export function registerForm(): RegisterFormData {
         return `В выбранной зоне недостаточно мест для группы из ${1 + this.guests.length} человек`;
       }
       for (let i = 0; i < this.guests.length; i++) {
-        if (!this.guests[i].trim()) return `Введите имя гостя ${i + 1}`;
+        if (!this.guests[i].name.trim()) return `Введите имя гостя ${i + 1}`;
       }
       return null;
     },
@@ -115,7 +119,7 @@ export function registerForm(): RegisterFormData {
           phone: this.phone.trim(),
           venueId: this.venueId,
           zoneId: this.selectedZoneId,
-          guests: this.guests.map(g => g.trim()).filter(g => g.length > 0),
+          guests: this.guests.map(g => g.name.trim()).filter(g => g.length > 0),
         });
 
         // Redirect to ticket page after successful booking
